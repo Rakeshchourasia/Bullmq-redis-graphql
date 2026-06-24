@@ -2,33 +2,44 @@ const mongoose = require("mongoose");
 
 const videoSchema = new mongoose.Schema(
   {
-    title: String,
+    title: {
+      type: String,
+      required: true,
+    },
 
-    url: String,
+    url: {
+      type: String,
+      default: "",
+    },
+
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
 
     status: {
       type: String,
       enum: [
         "UPLOADED",
         "PROCESSING",
-        "COMPLETED"
+        "COMPLETED",
+        "FAILED",
       ],
-      owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-      default: "UPLOADED"
+      default: "UPLOADED",
     },
 
-    thumbnail: String
+    thumbnail: {
+      type: String,
+      default: "",
+    },
   },
-
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
-module.exports = mongoose.model(
-  "Video",
-  videoSchema
-);
+const Video =
+  mongoose.models.Video ||
+  mongoose.model("Video", videoSchema);
+
+module.exports = Video;

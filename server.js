@@ -61,6 +61,62 @@ async function start() {
             },
         })
     );
+
+    const upload =
+        require("./src/middlewares/upload");
+
+    const cloudinary =
+        require("./src/config/cloudinary");
+
+    const Video =
+        require("./src/models/video");
+
+    const videoQueue =
+        require("./src/queues/videoQueue");
+
+
+    app.post(
+        "/upload",
+        upload.single("video"),
+        async (req, res) => {
+            try {
+                const result = await cloudinary.uploader.upload(
+                    req.file.path,
+                    {
+                        resource_type: "video",
+                        folder: "video-platform",
+                    }
+                );
+
+                const video = await Video.create({
+                    title: req.file.originalname,
+                    url: result.secure_url,
+                    status: "UPLOADED",
+                });
+
+                await videoQueue.add(
+                    "process-video",
+                    {
+                        videoId: video._id,
+                    }
+                );
+
+                res.status(200).json({
+                    success: true,
+                    video,
+                });
+
+            } catch (error) {
+                console.error(error);
+
+                res.status(500).json({
+                    success: false,
+                    message: error.message,
+                });
+            }
+        }
+    );
+
     app.listen(process.env.PORT, () => {
         console.log(`Server running on port ${process.env.PORT}`);
     });
