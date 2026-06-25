@@ -1,55 +1,34 @@
-const Video = require("../models/Video");
+const Video = require("../models/video");
+const User = require("../models/User");
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const User = require("../models/User");
-
-const videoQueue =
-  require("../queues/videoQueue");
+const videoQueue = require("../queues/videoQueue");
 
 const resolvers = {
-
   Query: {
-
     videos: async () => {
       return await Video.find();
-    }
+    },
+
+    myVideos: async (_, __, context) => {
+      console.log("MYVIDEOS CONTEXT:", context);
+
+      if (!context.user) {
+        throw new Error("Unauthorized");
+      }
+
+      const videos = await Video.find({
+        owner: context.user.id,
+      });
+
+      return videos;
+    },
   },
 
   Mutation: {
-
-    login: async (_, args) => {
-
-      const user =
-        await User.findOne({
-          email: args.email,
-        });
-
-      if (!user)
-        throw new Error("User not found");
-
-      const isMatch =
-        await bcrypt.compare(
-          args.password,
-          user.password
-        );
-
-      if (!isMatch)
-        throw new Error("Invalid password");
-
-      const token = jwt.sign(
-        { id: user._id },
-        process.env.JWT_SECRET
-      );
-
-      return {
-        token,
-        user,
-      };
-    },
-
     register: async (_, { name, email, password }) => {
-
       const existingUser = await User.findOne({
         email,
       });
@@ -82,22 +61,56 @@ const resolvers = {
         user,
       };
     },
+
+    login: async (_, { email, password }) => {
+      const user = await User.findOne({
+        email,
+      });
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      const isMatch =
+        await bcrypt.compare(
+          password,
+          user.password
+        );
+
+      if (!isMatch) {
+        throw new Error("Invalid password");
+      }
+
+      const token = jwt.sign(
+        {
+          id: user._id,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "7d",
+        }
+      );
+
+      return {
+        token,
+        user,
+      };
+    },
+
     uploadVideo: async (
       _,
       { title },
       context
     ) => {
-
       if (!context.user) {
-        throw new Error(
-          "Unauthorized"
-        );
+        throw new Error("Unauthorized");
       }
 
       const video =
         await Video.create({
           title,
           owner: context.user.id,
+          status: "UPLOADED",
         });
 
       await videoQueue.add(
@@ -109,12 +122,7 @@ const resolvers = {
 
       return video;
     },
-
-
-  }
+  },
 };
-
-
-
 
 module.exports = resolvers;

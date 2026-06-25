@@ -4,7 +4,10 @@ const { Worker } = require("bullmq");
 const connection = require("../config/redis");
 const connectDB = require("../config/db");
 const Video = require("../models/video");
+const ffmpeg = require("fluent-ffmpeg");
+const ffmpegPath = require("ffmpeg-static");
 
+ffmpeg.setFfmpegPath(ffmpegPath);
 async function startWorker() {
   await connectDB();
 

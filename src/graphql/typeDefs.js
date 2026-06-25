@@ -8,7 +8,9 @@ type Video {
 }
 
 type Query {
-  videos:[Video]
+  videos: [Video]
+
+  myVideos: [Video]
 }
 
 type Mutation {

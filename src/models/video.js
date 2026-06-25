@@ -1,42 +1,36 @@
 const mongoose = require("mongoose");
 
-const videoSchema = new mongoose.Schema(
-  {
-    title: {
-      type: String,
-      required: true,
-    },
+const videoSchema = new mongoose.Schema({
+  title: String,
 
-    url: {
-      type: String,
-      default: "",
-    },
+  url: String,
 
-    owner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+  publicId: String,
 
-    status: {
-      type: String,
-      enum: [
-        "UPLOADED",
-        "PROCESSING",
-        "COMPLETED",
-        "FAILED",
-      ],
-      default: "UPLOADED",
-    },
+  thumbnail: String,
 
-    thumbnail: {
-      type: String,
-      default: "",
-    },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
-  {
-    timestamps: true,
-  }
-);
+  publicId: {
+    type: String,
+    default: "",
+  },
+
+  status: {
+    type: String,
+    enum: [
+      "UPLOADED",
+      "PROCESSING",
+      "COMPLETED",
+      "FAILED",
+    ],
+    default: "UPLOADED",
+  },
+}, {
+  timestamps: true,
+});
 
 const Video =
   mongoose.models.Video ||
